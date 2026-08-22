@@ -1,13 +1,22 @@
-import { useState, Suspense, useRef } from 'react';
+import { useMemo, useRef, useState, Suspense } from 'react';
 import { Canvas, useLoader } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import './App.css';
 
-function EquirectangularSphere({ imageUrl }: { imageUrl: string }) {
+function useSrgbTexture(imageUrl: string) {
   const texture = useLoader(THREE.TextureLoader, imageUrl);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  
+  return useMemo(() => {
+    const configuredTexture = texture.clone();
+    configuredTexture.colorSpace = THREE.SRGBColorSpace;
+    configuredTexture.needsUpdate = true;
+    return configuredTexture;
+  }, [texture]);
+}
+
+function EquirectangularSphere({ imageUrl }: { imageUrl: string }) {
+  const texture = useSrgbTexture(imageUrl);
+
   return (
     <mesh scale={[-1, 1, 1]}>
       <sphereGeometry args={[500, 60, 40]} />
@@ -17,9 +26,8 @@ function EquirectangularSphere({ imageUrl }: { imageUrl: string }) {
 }
 
 function FlatImage({ imageUrl }: { imageUrl: string }) {
-  const texture = useLoader(THREE.TextureLoader, imageUrl);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  
+  const texture = useSrgbTexture(imageUrl);
+
   const width = texture.image ? texture.image.width : 2;
   const height = texture.image ? texture.image.height : 1;
   const aspect = width / height;
